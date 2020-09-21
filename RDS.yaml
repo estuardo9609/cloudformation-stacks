@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  This stack is made to create a DB instance with minimun resources and MYSQL. 
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Name to use for the tags at all resources that will be created in this section.
+  
+  AllocatedStorage:
+    Type: String
+    Description: Define de size of your initial storage. 
+    Default: "20" 
+  
+  DBInstanceClass:
+    Type: String
+    Description: Compute and memory capacity of the DB instance. 
+    Default: "db.t2.micro"
+
+  DBName:
+    Type: String
+    Description: Name of your database. 
+  
+  SecurityGroupCIDR:
+    Type: String
+    Default: 0.0.0.0/0
+  
+  VPC:
+    Type: String
+  
+  PrivateSubnet1:
+    Type: String
+  
+  PrivateSubnet2:
+    Type: String
+  
+  DBUserName:
+    Type: String
+  
+  DBPassword:
+    Type: String
+
+
+Resources:
+
+  # RDS DB Instance Definition
+  RDS:
+    Type: AWS::RDS::DBInstance
+    Properties: 
+      AllocatedStorage: !Ref AllocatedStorage
+      DBInstanceClass: !Ref DBInstanceClass
+      DBInstanceIdentifier: !Sub ${Environment}-DB
+      DBName: !Ref DBName
+      DBSubnetGroupName: !Ref SubnetGroup
+      Engine: mysql
+      MasterUsername: !Ref DBUserName
+      MasterUserPassword: !Ref DBPassword
+      Port: 3306
+      VPCSecurityGroups: 
+        - Ref: SecurityGroupRDS
+
+  # VPC Security Group for RDS
+  SecurityGroupRDS:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${Environment}-rds-sg
+      GroupDescription: Allow rds connection from vpc on port 3306 and 22 for MYSQL
+      SecurityGroupIngress:
+        - CidrIp: !Ref SecurityGroupCIDR
+          FromPort: -1
+          IpProtocol: tcp
+          ToPort: 3306
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: -1
+          IpProtocol: -1
+          ToPort: -1
+      VpcId: !Ref VPC
+
+  # Subnet Groups
+  SubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: My db subnet group
+      DBSubnetGroupName: !Sub ${Environment}-subnetGroup-rds
+      SubnetIds: 
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+
+Outputs:
+  RDS:
+    Value: !Ref RDS
+
+  Endpoint:
+    Value: !GetAtt RDS.Endpoint.Address
