@@ -33,7 +33,7 @@ Resources:
 
   # VPC definition
   VPC:
-    Type: AWS::EC2::VPC{
+    Type: AWS::EC2::VPC
     Properties:
       CidrBlock: !Ref VpcCidr
       Tags:
@@ -98,6 +98,13 @@ Resources:
       - Key: Name
         Value: !Sub ${Environment}-IGW
   
+  # Attach To Network
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+  
   # Elastic IP
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
   ElasticIP:
@@ -121,19 +128,19 @@ Resources:
   PublicRT:
     Type: AWS::EC2::RouteTable
     Properties: 
-    Tags: 
-      - Key: Name
-        Value: !Sub {Environment}-PublicRT
-    VpcId: !Ref VPC
+      Tags: 
+        - Key: Name
+          Value: !Sub ${Environment}-PublicRT
+      VpcId: !Ref VPC
   
   # Create Route Table Private
   PrivateRT: 
     Type: AWS::EC2::RouteTable
     Properties: 
-    Tags: 
-      - Key: Name
-        Value: !Sub {Environment}-PrivateRT
-    VpcId: !Ref VPC
+      Tags: 
+        - Key: Name
+          Value: !Sub ${Environment}-PrivateRT
+      VpcId: !Ref VPC
   
   # Create Route To Internet Gateway
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
@@ -162,7 +169,7 @@ Resources:
     Type: AWS::EC2::Route
     Properties: 
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway
+      NatGatewayId: !Ref NATGateway
       RouteTableId: !Ref PrivateRT
   
   # Associate public subnets
