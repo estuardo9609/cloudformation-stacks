@@ -38,7 +38,7 @@ Resources:
       CidrBlock: !Ref VpcCidr
       Tags:
         - Key: Name
-        Value: !Sub ${Environment}-VPC
+          Value: !Sub ${Environment}-VPC
   
   # Subnet definition
   # Availability zone reference: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getavailabilityzones.html
@@ -51,7 +51,7 @@ Resources:
       CidrBlock: !Ref PublicSubnet1CIDR
       Tags: 
         - Key: Name
-        Value: !Sub ${Environment}-PublicSubnet1
+          Value: !Sub ${Environment}-PublicSubnet1
       VpcId: !Ref VPC
   
   PublicSubnet2:
@@ -63,7 +63,7 @@ Resources:
       CidrBlock: !Ref PublicSubnet2CIDR
       Tags: 
         - Key: Name
-        Value: !Sub ${Environment}-PublicSubnet2
+          Value: !Sub ${Environment}-PublicSubnet2
       VpcId: !Ref VPC
 
   PrivateSubnet1:
@@ -75,7 +75,7 @@ Resources:
       CidrBlock: !Ref PrivateSubnet1CIDR
       Tags: 
         - Key: Name
-        Value: !Sub ${Environment}-PrivateSubnet1
+          Value: !Sub ${Environment}-PrivateSubnet1
       VpcId: !Ref VPC
 
   PrivateSubnet2:
@@ -87,7 +87,7 @@ Resources:
       CidrBlock: !Ref PrivateSubnet2CIDR
       Tags: 
         - Key: Name
-        Value: !Sub ${Environment}-PrivateSubnet2
+          Value: !Sub ${Environment}-PrivateSubnet2
       VpcId: !Ref VPC
 
   # Internet Gateway
@@ -105,7 +105,7 @@ Resources:
     Properties: 
       Tags:
         - Key: Name
-        Value: !Sub ${Environment}-EIP
+          Value: !Sub ${Environment}-EIP
   
   # NAT Gateway
   NATGateway:
@@ -115,7 +115,7 @@ Resources:
       SubnetId: !Ref PublicSubnet1
       Tags: 
         - Key: Name
-        Value: !Sub ${Environment}-ngw
+          Value: !Sub ${Environment}-ngw
   
   # Create Route Table Public
   PublicRT:
@@ -123,7 +123,7 @@ Resources:
     Properties: 
     Tags: 
       - Key: Name
-      Value: !Sub {Environment}-PublicRT
+        Value: !Sub {Environment}-PublicRT
     VpcId: !Ref VPC
   
   # Create Route Table Private
@@ -132,7 +132,7 @@ Resources:
     Properties: 
     Tags: 
       - Key: Name
-      Value: !Sub {Environment}-PrivateRT
+        Value: !Sub {Environment}-PrivateRT
     VpcId: !Ref VPC
   
   # Create Route To Internet Gateway
