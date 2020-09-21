@@ -1,0 +1,195 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  This stack is made to create a VPC with 2 private subnets, 2 public subnets, NAT Gateway, InternetGateway and its proper route tables. 
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Name to use for the tags at all resources that will be created in this section.
+  
+  VpcCidr:
+    Type: String
+    Description: CIDR block (IP Mask) for the resource. 
+  
+  PublicSubnet1CIDR:
+    Type: String
+    Description: CIDR for public subnet 1.
+  
+  PublicSubnet2CIDR:
+    Type: String
+    Description: CIDR for public subnet 2.
+
+  PrivateSubnet1CIDR:
+    Type: String
+    Description: CIDR for private subnet 1.
+
+  PrivateSubnet2CIDR:
+    Type: String
+    Description: CIDR for private subnet 2.
+
+
+Resources:
+
+  # VPC definition
+  VPC:
+    Type: AWS::EC2::VPC{
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      Tags:
+        - Key: Name
+        Value: !Sub ${Environment}-VPC
+  
+  # Subnet definition
+  # Availability zone reference: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getavailabilityzones.html
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: !Ref PublicSubnet1CIDR
+      Tags: 
+        - Key: Name
+        Value: !Sub ${Environment}-PublicSubnet1
+      VpcId: !Ref VPC
+  
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Select 
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: !Ref PublicSubnet2CIDR
+      Tags: 
+        - Key: Name
+        Value: !Sub ${Environment}-PublicSubnet2
+      VpcId: !Ref VPC
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Select 
+        - 2
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      Tags: 
+        - Key: Name
+        Value: !Sub ${Environment}-PrivateSubnet1
+      VpcId: !Ref VPC
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Select 
+        - 3
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      Tags: 
+        - Key: Name
+        Value: !Sub ${Environment}-PrivateSubnet2
+      VpcId: !Ref VPC
+
+  # Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Sub ${Environment}-IGW
+  
+  # Elastic IP
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-eip.html
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties: 
+      Tags:
+        - Key: Name
+        Value: !Sub ${Environment}-EIP
+  
+  # NAT Gateway
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt ElasticIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags: 
+        - Key: Name
+        Value: !Sub ${Environment}-ngw
+  
+  # Create Route Table Public
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+    Tags: 
+      - Key: Name
+      Value: !Sub {Environment}-PublicRT
+    VpcId: !Ref VPC
+  
+  # Create Route Table Private
+  PrivateRT: 
+    Type: AWS::EC2::RouteTable
+    Properties: 
+    Tags: 
+      - Key: Name
+      Value: !Sub {Environment}-PrivateRT
+    VpcId: !Ref VPC
+  
+  # Create Route To Internet Gateway
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html
+  PublicRoute: 
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicRT
+  
+  # Associate public subnets
+  PublicSubnet1RTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRT
+      SubnetId: !Ref PublicSubnet1
+  
+  PublicSubnet2RTAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties: 
+        RouteTableId: !Ref PublicRT
+        SubnetId: !Ref PublicSubnet2
+
+  # Create Route To NAT Gateway 
+  PrivateRoute: 
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+      RouteTableId: !Ref PrivateRT
+  
+  # Associate public subnets
+  PrivateSubnet1RTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PrivateRT
+      SubnetId: !Ref PrivateSubnet1
+  
+  PrivateSubnet2RTAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties: 
+        RouteTableId: !Ref PrivateRT
+        SubnetId: !Ref PrivateSubnet2
+
+Outputs:
+  VPC:
+    Value: !Ref VPC
+  
+  PublicSubnet1:
+    Value: !Ref PublicSubnet1
+
+  PublicSubnet2:
+    Value: !Ref PublicSubnet2
+
+  PrivateSubnet1:
+    Value: !Ref PrivateSubnet1
+
+  PrivateSubnet2:
+    Value: !Ref PrivateSubnet2
