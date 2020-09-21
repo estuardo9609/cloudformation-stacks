@@ -7,6 +7,7 @@ Parameters:
   VPCTemplateURL:
     Type: String
     Description: Provide de vpc template url for stack. 
+    Default: 
   
   RDSTemplateURL:
     Type: String
@@ -40,7 +41,7 @@ Parameters:
     Type: String
     Description: Database name for mysql instance.
   
-  DBUsername:
+  DBUserName:
     Type: String
     Description: Master username.
   
@@ -67,7 +68,7 @@ Resources:
 
   # RDS
   RDS:
-    Type: AWS::EC2::SecurityGroup
+    Type: AWS::CloudFormation::Stack
     Properties: 
       TemplateURL: !Ref RDSTemplateURL
       Parameters: 
