@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  This stack is made to create a DB instance with minimun resources and MYSQL. 
+
+Parameters:
+  VPCTemplateURL:
+    Type: String
+    Description: Provide de vpc template url for stack. 
+  
+  RDSTemplateURL:
+    Type: String
+    Description: Provide the rds template url for stack.
+
+  Environment:
+    Type: String
+    Description: Name to use for the tags at all resources that will be created in this section.
+  
+  VpcCidr:
+    Type: String
+    Description: CIDR block (IP Mask) for the resource. 
+  
+  PublicSubnet1CIDR:
+    Type: String
+    Description: CIDR for public subnet 1.
+  
+  PublicSubnet2CIDR:
+    Type: String
+    Description: CIDR for public subnet 2.
+
+  PrivateSubnet1CIDR:
+    Type: String
+    Description: CIDR for private subnet 1.
+
+  PrivateSubnet2CIDR:
+    Type: String
+    Description: CIDR for private subnet 2.
+  
+  DBName:
+    Type: String
+    Description: Database name for mysql instance.
+  
+  DBUsername:
+    Type: String
+    Description: Master username.
+  
+  DBPassword: 
+    Type: String
+    Description: Master password.
+
+
+
+Resources:
+
+  # VPC Template
+  VPC:
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Ref VPCTemplateURL
+      Parameters: 
+        Environment: !Ref Environment
+        VpcCidr: !Ref VpcCidr
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+        PrivateSubnet1CIDR: !Ref PrivateSubnet1CIDR
+        PrivateSubnet2CIDR: !Ref PrivateSubnet2CIDR
+
+  # RDS
+  RDS:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      TemplateURL: !Ref RDSTemplateURL
+      Parameters: 
+        Environment: !Ref Environment
+        DBName: !Ref DBName
+        SecurityGroupCIDR: !Ref VpcCidr
+        VPC: !GetAtt VPC.Outputs.VPC
+        PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
+        DBUserName: !Ref DBUserName
+        DBPassword: !Ref DBPassword
