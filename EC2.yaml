@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  This stack will launch an EC2 instance with wordpress installed and configured. 
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Name to use for the tags at all resources that will be created in this section.
+  
+  ImageId: 
+    Type: String
+    Description: Place the id of the image you will use to set your EC2 instance. 
+
+  InstanceType:
+    Type: String
+    Description: Instance type for the ec2. 
+    Default: t2.micro
+  
+  PublicSubnet1:
+    Type: String
+    Description: Public subnet to place the EC2.
+  
+  VPC:
+    Type: String
+
+Resources:
+  # RDS DB Instance Definition
+  # Wordpress installation https://docs.aws.amazon.com/es_es/AWSEC2/latest/UserGuide/hosting-wordpress.html
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: True
+          DeleteOnTermination: True
+          Description: "Network interface created on launch"
+          SubnetId: !Ref PublicSubnet1
+          DeviceIndex: 0
+          GroupSet:
+            - Ref: SecurityGroupEC2
+      UserData:
+        Fn::Base64:                              
+          !Sub |
+            #!/bin/bash
+            yum update -y
+            yum install -y mysql httpd
+            wget https://wordpress.org/latest.tar.gz
+            tar -xzf latest.tar.gz
+
+            export MYSQL_HOST=${rdsEndpoint}
+
+            mv /wordpress/wp-config-sample.php /wordpress/wp-config.php 
+
+            sed -i 's/database_name_here/'"$DBName"'/g' /wordpress/wp-config.php 
+            sed -i 's/username_here/'"$rdsUsername"'/g' /wordpress/wp-config.php 
+            sed -i 's/password_here/'"$rdsPassword"'/g' /wordpress/wp-config.php 
+            sed -i 's/localhost/'"$rdsEndpoint"'/g' /wordpress/wp-config.php 
+
+            mv /wordpress/* /var/www/html/
+
+            sudo systemctl restart httpd
+
+      Tags: 
+        - Key: Name
+          Value: !Sub ${Environment}-ec2
+
+  # Security group for ec2
+  SecurityGroupEC2:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${Environment}-ec2-sg
+      GroupDescription: Allow connection to port 80 from anywhere.
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: "-1"
+      VpcId: !Ref VPC

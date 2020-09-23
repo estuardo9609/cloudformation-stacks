@@ -1,17 +1,20 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description:
-  This stack is made to create a DB instance with minimun resources and MYSQL. 
+  This stack is made to build an infrastructure for a wordpress page. 
 
 Parameters:
   VPCTemplateURL:
     Type: String
     Description: Provide de vpc template url for stack. 
-    Default: 
-  
+
   RDSTemplateURL:
     Type: String
     Description: Provide the rds template url for stack.
+  
+  EC2TemplateURL:
+    Type: String
+    Description: Provide the EC2 template url for stack.
 
   Environment:
     Type: String
@@ -48,7 +51,15 @@ Parameters:
   DBPassword: 
     Type: String
     Description: Master password.
+    NoEcho: True
 
+  InstanceType:
+    Type: String
+    Description: EC2 instance type to place the wordpress server.
+
+  ImageId:
+    Type: String
+    Description: Place here the id of an AMI instance.
 
 
 Resources:
@@ -80,3 +91,15 @@ Resources:
         PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
         DBUserName: !Ref DBUserName
         DBPassword: !Ref DBPassword
+  
+  # EC2
+  EC2:
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Ref EC2TemplateURL
+      Parameters: 
+        Environment: !Ref Environment
+        ImageId: !Ref ImageId
+        InstanceType: !Ref InstanceType
+        PublicSubnet1: !GetAtt VPC.Outputs.PublicSubnet1
+        VPC: !GetAtt VPC.Outputs.VPC
