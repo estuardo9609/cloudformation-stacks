@@ -50,17 +50,17 @@ Resources:
             tar -xzf latest.tar.gz
 
             export MYSQL_HOST=${rdsEndpoint}
+            export DBName=${DBName}
 
             mv /wordpress/wp-config-sample.php /wordpress/wp-config.php 
 
-            sed -i 's/database_name_here/'"$DBName"'/g' /wordpress/wp-config.php 
+            sed -i 's/database_name_here/${DBName}/g' /wordpress/wp-config.php 
             sed -i 's/username_here/'"$rdsUsername"'/g' /wordpress/wp-config.php 
             sed -i 's/password_here/'"$rdsPassword"'/g' /wordpress/wp-config.php 
             sed -i 's/localhost/'"$rdsEndpoint"'/g' /wordpress/wp-config.php 
-
             mv /wordpress/* /var/www/html/
 
-            sudo systemctl restart httpd
+            systemctl restart httpd
 
       Tags: 
         - Key: Name
